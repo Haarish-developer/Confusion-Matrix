@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Confusion Matrix (TP, TN, FP, FN)</title>
+<style>
+  :root { font-family: system-ui, Arial, sans-serif; }
+  body { margin: 24px; }
+  h1 { margin: 0 0 12px; font-size: 1.25rem; }
+  .wrap { display: grid; gap: 18px; max-width: 720px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 110px 1fr 1fr;
+    grid-template-rows: 50px 1fr 1fr;
+    border: 2px solid #ddd; border-radius: 14px; overflow: hidden;
+  }
+  .cell {
+    display: grid; place-items: center; min-height: 64px;
+    border: 1px solid #eee; font-weight: 600;
+  }
+  .muted { background: #fafafa; font-weight: 500; }
+  .axis { writing-mode: vertical-rl; transform: rotate(180deg); background: #f5f5f5; }
+  .caps { font-variant: small-caps; letter-spacing: .5px; color: #666; font-weight: 600; }
+  .note { font-size: .9rem; color: #666; }
+  input[type="number"] {
+    width: 90px; padding: 8px 10px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-weight: 700;
+  }
+  .kpi { display: grid; grid-template-columns: repeat(4, minmax(120px,1fr)); gap: 10px; }
+  .card { border: 1px solid #eee; border-radius: 12px; padding: 12px; text-align: center; }
+  .big { font-size: 1.15rem; font-weight: 800; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .pill { background: #f3f3f3; border-radius: 999px; padding: 6px 10px; font-size: .85rem; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Confusion Matrix (Binary)</h1>
+
+    <div class="row">
+      <span class="pill">Enter counts:</span>
+      <label>TN <input id="tn" type="number" min="0" value="50"></label>
+      <label>FP <input id="fp" type="number" min="0" value="5"></label>
+      <label>FN <input id="fn" type="number" min="0" value="7"></label>
+      <label>TP <input id="tp" type="number" min="0" value="38"></label>
+    </div>
+
+    <!-- Matrix -->
+    <div class="grid">
+      <div class="cell muted"></div>
+      <div class="cell muted caps">Predicted: 0</div>
+      <div class="cell muted caps">Predicted: 1</div>
+
+      <div class="cell axis caps">Actual: 0</div>
+      <div class="cell" id="TN">TN</div>
+      <div class="cell" id="FP">FP</div>
+
+      <div class="cell axis caps">Actual: 1</div>
+      <div class="cell" id="FN">FN</div>
+      <div class="cell" id="TP">TP</div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi">
+      <div class="card"><div class="caps">Accuracy</div><div class="big" id="acc">—</div></div>
+      <div class="card"><div class="caps">Precision (Pos)</div><div class="big" id="prec">—</div></div>
+      <div class="card"><div class="caps">Recall (TPR)</div><div class="big" id="rec">—</div></div>
+      <div class="card"><div class="caps">F1-Score</div><div class="big" id="f1">—</div></div>
+    </div>
+
+    <div class="note">
+      Layout: rows = Actual (0 then 1), columns = Predicted (0 then 1).<br/>
+      Positions: TN(0,0) • FP(0,1) • FN(1,0) • TP(1,1)
+    </div>
+  </div>
+
+<script>
+  const ids = ["tn","fp","fn","tp"];
+  const els = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+  const cells = {
+    TN: document.getElementById("TN"),
+    FP: document.getElementById("FP"),
+    FN: document.getElementById("FN"),
+    TP: document.getElementById("TP"),
+  };
+  const kpi = {
+    acc: document.getElementById("acc"),
+    prec: document.getElementById("prec"),
+    rec: document.getElementById("rec"),
+    f1: document.getElementById("f1"),
+  };
+
+  function fmt(x) {
+    if (!isFinite(x)) return "—";
+    return (Math.round(x * 1000) / 10).toFixed(1) + "%";
+  }
+
+  function update() {
+    const TN = +els.tn.value || 0;
+    const FP = +els.fp.value || 0;
+    const FN = +els.fn.value || 0;
+    const TP = +els.tp.value || 0;
+
+    cells.TN.textContent = `TN: ${TN}`;
+    cells.FP.textContent = `FP: ${FP}`;
+    cells.FN.textContent = `FN: ${FN}`;
+    cells.TP.textContent = `TP: ${TP}`;
+
+    const total = TN + FP + FN + TP;
+    const accuracy = total ? (TP + TN) / total : NaN;
+    const precision = (TP + FP) ? TP / (TP + FP) : NaN;
+    const recall = (TP + FN) ? TP / (TP + FN) : NaN;
+    const f1 = (precision + recall) ? 2 * precision * recall / (precision + recall) : NaN;
+
+    kpi.acc.textContent = fmt(accuracy);
+    kpi.prec.textContent = fmt(precision);
+    kpi.rec.textContent = fmt(recall);
+    kpi.f1.textContent = fmt(f1);
+  }
+
+  ids.forEach(id => els[id].addEventListener("input", update));
+  update();
+</script>
+</body>
+</html>
